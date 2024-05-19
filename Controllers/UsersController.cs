@@ -6,9 +6,11 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Data;
 using System.Data.SqlClient;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using Response = matensa.Models.Response;
@@ -29,7 +31,7 @@ namespace matensa.Controllers
         //private static List<string> ListUsers = new List<string>() { "rami", "ahmad" };
 
         [HttpGet]
-        [Route("admin/List")]
+        [Route("List")]
         public string GetAllUsers()
         {
 
@@ -65,6 +67,35 @@ namespace matensa.Controllers
             }
         }
 
+        [HttpGet("{id}")]
+        public string GetOneUser(int id)
+        {
+            SqlConnection con = new SqlConnection(_configuration.GetConnectionString("MatensaAppCon").ToString());
+            SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM dbo.Users WHERE id = " + id, con);
+            DataTable dt = new DataTable();
+            da.Fill(dt);
+            Response response = new Response();
+            if(dt.Rows.Count > 0)
+            {
+                int i = 0;
+                User user = new User();
+                user.Id = Convert.ToInt32(dt.Rows[i]["Id"]);
+                user.Name = Convert.ToString(dt.Rows[i]["Name"]);
+                user.Email = Convert.ToString(dt.Rows[i]["Email"]);
+                user.Phone = Convert.ToString(dt.Rows[i]["Phone"]);
+                user.Dob = Convert.ToString(dt.Rows[i]["Dob"]);
+                user.Password = Convert.ToString(dt.Rows[i]["Password"]);
+                user.Balance = Convert.ToDecimal(dt.Rows[i]["Balance"]);
+                return JsonConvert.SerializeObject(user); ;
+            } else
+            {
+                response.StatusCode = 100;
+                response.ErrorMessage = "User is not exist.";
+                return JsonConvert.SerializeObject(response);
+            }
+
+        }
+
         [HttpPost]
         [Route("Create")]
 
@@ -81,6 +112,17 @@ namespace matensa.Controllers
             }
             else
             {
+                string usersAll = GetAllUsers();
+                List<User> usersList = JsonConvert.DeserializeObject<List<User>>(usersAll);
+                foreach (User u in usersList)
+                {
+                    if (u.Email == user.Email)
+                    {
+                        response.StatusCode = 100;
+                        response.ErrorMessage = "Email already exist.";
+                        return JsonConvert.SerializeObject(response);
+                    }
+                }
                 //string password = user.EncodePasswordToBase64(user.Password);
                 string password = BCrypt.Net.BCrypt.HashPassword(user.Password);
                 string token = CreateToken(user);
@@ -102,25 +144,71 @@ namespace matensa.Controllers
             
         }
 
+        [HttpPost]
+        [Route("Balance/{id:int}")]
+        public string AddBalance(int id, float balance) {
+  
+            
+            SqlConnection con = new SqlConnection(_configuration.GetConnectionString("MatensaAppCon").ToString());
+            SqlCommand cmd = new SqlCommand("Update dbo.Users SET Balance = '" + balance + "' WHERE Id = "+id, con);
+            con.Open();
+            int i = cmd.ExecuteNonQuery();
+            con.Close();
+            Response response = new Response();
+            if (i  > 0)
+            {
+                return "Balance was added successfully.";
+            } else
+            {
+                response.StatusCode = 100;
+                response.ErrorMessage = "Error Occur.";
+                return JsonConvert.SerializeObject(response);
+            }
+            
+
+        }
        
         [HttpPut("{id}")]
         //[Route("Update")]
         public string Update(int id, User user)
         {
             SqlConnection con = new SqlConnection(_configuration.GetConnectionString("MatensaAppCon").ToString());
-
-            string password = user.EncodePasswordToBase64(user.Password);
-            SqlCommand cmd = new SqlCommand("UPDATE dbo.Users SET Name = '" + user.Name + "', Email = '" + user.Email + "',Phone =  '" + user.Phone + "', Dob = '" + user.Dob + "', Password = '" + password + "' WHERE Id = " + id, con);
-            con.Open();
-            int i = cmd.ExecuteNonQuery();
-            con.Close();
-            if (i > 0)
+            bool validEmail = user.IsValid(user.Email);
+            Response response = new Response();
+            if (validEmail == false)
             {
-                return "User was updated successfully.";
+                response.StatusCode = 100;
+                response.ErrorMessage = "Invalid Email.";
+                return JsonConvert.SerializeObject(response);
             }
             else
             {
-                return "Error Occur.";
+                string usersAll = GetAllUsers();
+                List<User> usersList = JsonConvert.DeserializeObject<List<User>>(usersAll);
+                foreach (User u in usersList)
+                {
+                    if (u.Email == user.Email && u.Id != id)
+                    {
+                        response.StatusCode = 100;
+                        response.ErrorMessage = "Email already exist.";
+                        return JsonConvert.SerializeObject(response);
+                    }
+                }
+                string password = user.EncodePasswordToBase64(user.Password);
+                SqlCommand cmd = new SqlCommand("UPDATE dbo.Users SET Name = '" + user.Name + "', Email = '" + user.Email + "',Phone =  '" + user.Phone + "', Dob = '" + user.Dob + "', Password = '" + password + "' WHERE Id = " + id, con);
+                con.Open();
+                int i = cmd.ExecuteNonQuery();
+                con.Close();
+                if (i > 0)
+                {
+                    return "User was updated successfully.";
+                }
+                else
+                {
+                    response.StatusCode = 100;
+                    response.ErrorMessage = "Error Occur.";
+                    return JsonConvert.SerializeObject(response);
+                }
             }
 
         }

@@ -12,7 +12,7 @@ namespace matensa.Models
         public string Phone { get; set; }
         public string Dob { get; set; }
         public string Password { get; set; }
-        public float Balance { get; set; }
+        public decimal Balance { get; set; }
         //public string Token { get; set; }
 
         public string EncodePasswordToBase64(string password)
