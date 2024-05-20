@@ -28,7 +28,6 @@ namespace matensa.Controllers
             _configuration = configurtion;
         }
 
-        //private static List<string> ListUsers = new List<string>() { "rami", "ahmad" };
 
         [HttpGet]
         [Route("List")]
@@ -283,56 +282,6 @@ namespace matensa.Controllers
         }
 
 
-        /*
-        [HttpGet]
-        public IActionResult GetUsers()
-        {
-            if (ListUsers.Count > 0)
-            {
-                return Ok(ListUsers);
-            } else
-            {
-                return NoContent();
-            }
-        }
-
-        [HttpGet("{id}")]
-        public IActionResult GetUser(int id) { 
-            if( id >= 0 && id < ListUsers.Count ){
-                return Ok(ListUsers[id]);
-            }
-            return NotFound();
-        }
-
-        [HttpPost]
-        public IActionResult AddUser(string username)
-        {
-            ListUsers.Add(username);
-                return Ok();
-
-        }
-
-        [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, string username)
-        {
-            if(id >= 0 && id < ListUsers.Count)
-            {
-                ListUsers[id] = username;
-            }
-            return Ok();
-        }
-
-
-        [HttpDelete("{id}")]
-        public IActionResult DeleteUser(int id)
-        {
-            if (id >= 0 && id < ListUsers.Count)
-            {
-                ListUsers.RemoveAt(id);
-            }
-            return NoContent();
-
-        }
-        */
+        
     }
 }
