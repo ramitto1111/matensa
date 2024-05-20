@@ -1,4 +1,4 @@
-# matensa
+# Matensa
 This is a mini project that provides Users APIs and Balance.
 
 To Run the project:
@@ -16,7 +16,7 @@ To Run the project:
 
 
 
-#Available APIs:
+# Available APIs:
 
 
 Users:
